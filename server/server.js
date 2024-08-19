@@ -473,7 +473,33 @@ app.get('/cart/:idtaikhoan', (req, res) => {
   });
 });
 
+app.post('/api/orders', (req, res) => {
+  const { idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, thanhtoan, tongdonhang, thoigiandathang } = req.body;
 
+  // Thêm thông tin đơn hàng vào bảng orders
+  db.query('INSERT INTO donhang (idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, thanhtoan, tongdonhang, thoigiandathang) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+  [idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, thanhtoan, tongdonhang, thoigiandathang], (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+
+    const iddonhang = results.insertId;
+
+    // Thêm thông tin sản phẩm vào bảng order_items
+    const orderItems = req.body.products.map(product => [
+      iddonhang ,
+      product.idsanpham,
+      product.tensanpham,
+      product.quantity,
+      product.giahientai,
+      product.giahientai * product.quantity
+    ]);
+
+    db.query('INSERT INTO chitietdonhang (iddonhang , idsanpham, soluong, tensanpham, giahientai, tonggiasanpham) VALUES ?', 
+    [orderItems], (error) => {
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(201).json({ message: 'Order placed successfully' });
+    });
+  });
+});
 
 
 app.listen(4000, () => {

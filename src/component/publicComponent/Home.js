@@ -49,6 +49,7 @@ const imgslide = [
   },
 ];
 
+
 const buttonStyle = {
   width: "30px",
   background: "none",

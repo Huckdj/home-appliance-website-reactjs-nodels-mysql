@@ -25,7 +25,7 @@ const ErrorLoginZalo = () =>
     );
   const SuccessLogin = () =>
       toast.success(
-        "Đăng nhập thành công"
+        "Đăng nhập thành công chờ 3 giây chuyển hướng trang"
       );
 function Login() {
 

@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-lone-blocks */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable react/jsx-no-target-blank */
 /* eslint-disable jsx-a11y/alt-text */
@@ -26,6 +28,9 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import {useSelector} from 'react-redux';
+import {useDispatch } from "react-redux";
+
 
 function Header() {
   const carouselRef = useRef(null);
@@ -38,6 +43,7 @@ function Header() {
 
     return () => clearInterval(interval);
   }, []);
+
 
   // lấy thông tin hãng
   const [hang, setHang] = useState([]);
@@ -69,8 +75,8 @@ function Header() {
   const [auth, setAuth] = useState(false);
   const [tentaikhoan, setTentaikhoan] = useState("");
   const [idtaikhoan, setIdtaikhoan] = useState("");
-  const [countgiohang, setCountgiohang] = useState('');
-
+  const [emails, setEmail] = useState("");
+  const dispatch = useDispatch();
   axios.defaults.withCredentials = true;
   useEffect(() => {
     axios.get("http://localhost:4000").then((res) => {
@@ -78,6 +84,7 @@ function Header() {
         setAuth(true);
         setTentaikhoan(res.data.tentaikhoan);
         setIdtaikhoan(res.data.idtaikhoan);
+        setEmail(res.data.email);
         localStorage.setItem("auth", true);
       } else {
         setAuth(false);
@@ -85,25 +92,28 @@ function Header() {
       }
     });
   }, []);
+  
+  useEffect(() =>{
+    if (auth){
+      dispatch({type: "INFO_USER", payload: {idtaikhoan: idtaikhoan, tentaikhoan: tentaikhoan, email:emails}})
+    }
+  },[idtaikhoan])
+  const cart = useSelector((state) => state.cart.CartAr)
+  const totalcart = () =>{
+    let totalcart = 0;
+    if (cart) {
+      cart.forEach(item => {
+          totalcart += item.quantity;
+      });
+    }
 
-  useEffect(() => {
-    if (idtaikhoan) {
-      axios.get(`http://localhost:4000/getcount/${idtaikhoan}`)
-        .then(res => {
-          if (res.data.count !== 0){
-          setCountgiohang(res.data.count);
-          }else{
-            setCountgiohang(0)
-          }
-        })
-        .catch(err => {
-          console.error('Error fetching data:', err);
-        });
-    }
-    else{
-      setCountgiohang(0)
-    }
-  }, [idtaikhoan]);
+  return totalcart;
+  }
+  useEffect(() =>{
+    totalcart()
+  },[cart])
+
+
   const getLastNamePart = (fullName) => {
     const nameParts = fullName.trim().split(" ");
     return nameParts[nameParts.length - 1];
@@ -184,7 +194,7 @@ function Header() {
               <div className="py-1">
                 <h2 className="ml-2 font-bold text-base">Hãng Sản Xuất</h2>
                 {hang.map((hang) => (
-                  <MenuItem>
+                  <MenuItem key = {hang.idhang}>
                     <Link
                       to={`/hang/${hang.idhang}`}
                       className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900 no-underline"
@@ -196,7 +206,7 @@ function Header() {
                 <hr />
                 <h2 className="ml-2 font-bold text-base">Loại Máy Bạn Cần</h2>
                 {loaimay.map((loaimay) => (
-                  <MenuItem>
+                  <MenuItem key = {loaimay.idloaisanpham}>
                     <Link
                       to={`/loaimay/${loaimay.idloaisanpham}`}
                       className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900 no-underline"
@@ -288,8 +298,8 @@ function Header() {
 
           {/* Giỏ Hàng */}
           <div className="ml-3">
-            <Link
-              to={`/cart/${idtaikhoan}`}
+            <a
+              href={`/cart`}
               className="cal_info_header text-xs text-white font-roboto p-1 hover:bg-slate-200/30 hover:rounded-lg hover:p-1 no-underline"
             >
               <div className="icon_call mr-0.5 relative ">
@@ -298,7 +308,7 @@ function Header() {
                   className="w-8 mr-0.7 img-icon-call  object-cover"
                 />
                 <p class="absolute inset-0 flex items-center justify-center text-white text-xs font-semibold pt-2">
-                  {countgiohang}
+                  {totalcart()}
                 </p>
               </div>
               <div>
@@ -309,12 +319,12 @@ function Header() {
                   <p className="text-xs text-white font-roboto">hàng</p>
                 </div>
               </div>
-            </Link>
+            </a>
           </div>
 
           {/* Thông tin tài khoản người dùng */}
           {auth ? (
-            <Link to="/infouser" className="ml-3">
+            <Link to={`/infouser/${idtaikhoan}`} className="ml-3">
               <div
                 to="/login"
                 className="cal_info_header text-xs text-white font-roboto p-1 hover:bg-slate-200/30 hover:rounded-lg hover:p-1"

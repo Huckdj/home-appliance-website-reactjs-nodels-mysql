@@ -11,8 +11,9 @@ import verifyicon from "../../assets/images/Productinfoicon/verifyicon.png";
 import adsproductinfo from "../../assets/images/trang-chi-tiet-desk-920x230-16.png";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {useDispatch } from "react-redux";
+import { ADD_PRODUCT} from "../../actions/Cartactions";
 
-const isAuthenticated = localStorage.getItem('auth')
 
 const imagesproduct = (filename) => {
   const imagesproduct = require(`../../assets/publicimg/imgproduct/${filename}`);
@@ -40,47 +41,16 @@ function tragopbinhthuong() {
 
 function ProductinfoComponent() {
   const { id } = useParams();
-  const [idtaikhoan, setIdtaikhoan] = useState('')
-  axios.defaults.withCredentials = true;
-  useEffect(() => {
-    axios.get("http://localhost:4000").then((res) => {
-      if (res.data.Status === "Success") {
-        setIdtaikhoan(res.data.idtaikhoan);
-      } else {
-        ErrorToast('Hình như bạn chưa đăng nhập')
-      }
-    });
-  }, []);
-  const [values,setValues] = useState({
-    idtaikhoan:'',
-    idsanpham: id
-  })
-  useEffect(() => {
-    setValues({
-      idtaikhoan: idtaikhoan,
-      idsanpham: id
-    });
-  }, [idtaikhoan, id]);
-  
-  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-  const themgiohang = () => {
-    if (isAuthenticated){
-        axios.post("http://localhost:4000/addcart",values)
-        .then((res) => {
-          if (res.data.Status === "Success") {
-            SuccessToast("Thêm giỏ hàng thành công");
-            sleep(2000).then(()=>{
-              window.location.reload()
-            })
-          }else{
-          ErrorToast("Lỗi Thêm giỏ hàng")
-        }})
-    }else{
-      ErrorToast("Hãy đăng nhập để mua hàng nhé")
-    }
-  }
-  
+
+
+  const dispatch = useDispatch();
+  const themgiohang = (product) => {
+    dispatch(ADD_PRODUCT(product));
+    SuccessToast("Thêm thành công");
+    console.log(product);
+  };
+
   const [infoproduct, setInfoproduct] = useState();
   useEffect(() => {
     axios
@@ -93,7 +63,7 @@ function ProductinfoComponent() {
       <Header />
       <div className="ml-60 mr-60 mt-10">
         {infoproduct?.map((infoproduct) => (
-          <div>
+          <div key = {infoproduct.idsanpham}>
             <div className="font-bold text-lg font-sans">
               {infoproduct.tensanpham}
             </div>
@@ -146,9 +116,7 @@ function ProductinfoComponent() {
                   <h2 className="font-bold text-lg font-sans">
                     Đánh giá {infoproduct.tensanpham}
                   </h2>
-                  <div className ='pt-2 font-sans'>
-                    Chưa có đánh giá
-                  </div>
+                  <div className="pt-2 font-sans">Chưa có đánh giá</div>
                 </div>
               </div>
               {/* ////End cột 1 */}
@@ -226,7 +194,20 @@ function ProductinfoComponent() {
                   {/* Button */}
                   <div className="mt-2">
                     <div className="buttonproductinfo justify-center grid bg-red-500 p-3 rounded-md min-h-5">
-                      <button onClick={themgiohang}className="font-sans text-white">
+                      <button
+                        onClick={() =>
+                          themgiohang({
+                            idsanpham: infoproduct.idsanpham,
+                            tensanpham: infoproduct.tensanpham,
+                            quantity: 1,
+                            giahientai: infoproduct.giahientai,
+                            giasanpham: infoproduct.giasanpham,
+                            phantramgiamgia: infoproduct.phantramgiamgia,
+                            images: infoproduct.images
+                          })
+                        }
+                        className="font-sans text-white"
+                      >
                         MUA NGAY (Thêm giỏ hàng)
                       </button>
                     </div>

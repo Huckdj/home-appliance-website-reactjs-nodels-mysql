@@ -77,6 +77,13 @@ function Header() {
   const [idtaikhoan, setIdtaikhoan] = useState("");
   const [emails, setEmail] = useState("");
   const dispatch = useDispatch();
+  useEffect(() => {
+    axios.get("http://localhost:4000").then((res) => {
+      if (res.data.Status === "Success") {
+        localStorage.setItem("role", res.data.role);
+      }
+    });
+  }, []);
   axios.defaults.withCredentials = true;
   useEffect(() => {
     axios.get("http://localhost:4000").then((res) => {
@@ -121,7 +128,7 @@ function Header() {
 
   const lastName = getLastNamePart(tentaikhoan);
   return (
-    <div className="header-container shadow-lg shadow-black-500/50">
+    <div className="header-container shadow-lg shadow-black-500/50 overflow-y-hidden">
       <div className="header">
         <div className="slider-container-top">
           <Carousel

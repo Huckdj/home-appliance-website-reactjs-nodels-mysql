@@ -294,6 +294,7 @@ const verifyUser = (req,res, next) => {
               req.tentaikhoan = decoded.tentaikhoan;
               req.idtaikhoan = decoded.idtaikhoan ;
               req.email = decoded.email;
+              req.Role = decoded.Role;
               next();
           }
       })
@@ -301,7 +302,7 @@ const verifyUser = (req,res, next) => {
 }
 
 app.get('/', verifyUser,(req,res) => {
-  return res.json({Status: "Success", tentaikhoan: req.tentaikhoan, idtaikhoan: req.idtaikhoan, emaill : req.email})
+  return res.json({Status: "Success", tentaikhoan: req.tentaikhoan, idtaikhoan: req.idtaikhoan, emaill : req.email, Role: req.Role})
 })
 
 app.get('/logout',(req,res) =>{
@@ -341,14 +342,15 @@ app.get('/product_info/:id', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
+  const email = req.body.email
+  const password = req.body.password
   const sql = 'SELECT * FROM taikhoan WHERE email = ? AND password = ?';
-  db.query(sql, [req.body.email, req.body.password], (err, data) => {
+  db.query(sql, [email, password], (err, data) => {
       if(err) return res.json({Error: "Lỗi hệ thống hãy thử lại"});
       if(data.length > 0){
-              const tentaikhoan = data[0].tentaikhoan;
-              const idtaikhoan  = data[0].idtaikhoan ;
-              const email = data[0].email;
-              const token = jwt.sign({tentaikhoan, idtaikhoan , email}, "jwt-secret-key", {expiresIn: '1d'});
+              const user = data[0];
+              const { tentaikhoan, idtaikhoan, Role, email } = user;
+              const token = jwt.sign({tentaikhoan, idtaikhoan , email, Role}, "jwt-secret-key", {expiresIn: '1d'});
               res.cookie('token', token);
               return res.json({Status: "Success"})
       } else {
@@ -474,13 +476,12 @@ app.get('/cart/:idtaikhoan', (req, res) => {
 });
 
 app.post('/api/orders', (req, res) => {
-  const { idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, thanhtoan, tongdonhang, thoigiandathang } = req.body;
+  const { idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, kieuthanhtoan, tongdonhang } = req.body;
 
   // Thêm thông tin đơn hàng vào bảng orders
-  db.query('INSERT INTO donhang (idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, thanhtoan, tongdonhang, thoigiandathang) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-  [idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, thanhtoan, tongdonhang, thoigiandathang], (error, results) => {
-    if (error) return res.status(500).json({ error: error.message });
-
+  db.query('INSERT INTO donhang (idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, kieuthanhtoan, tongdonhang, thoigiandathang) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())', 
+  [idtaikhoan, trangthai, tenkhachhang, sdt, email, tinhthanhpho, quanhuyen, phuongxa, sonhatenduong, ghichu, kieuthanhtoan, tongdonhang], (error, results) => {
+    if(error) return console.log(error);
     const iddonhang = results.insertId;
 
     // Thêm thông tin sản phẩm vào bảng order_items
@@ -493,14 +494,94 @@ app.post('/api/orders', (req, res) => {
       product.giahientai * product.quantity
     ]);
 
-    db.query('INSERT INTO chitietdonhang (iddonhang , idsanpham, soluong, tensanpham, giahientai, tonggiasanpham) VALUES ?', 
+    db.query('INSERT INTO chitietdonhang (iddonhang , idsanpham, tensanpham, soluong, giahientai, tonggiasanpham) VALUES ?', 
     [orderItems], (error) => {
       if (error) return res.status(500).json({ error: error.message });
-      return res.status(201).json({ message: 'Order placed successfully' });
+      return res.status(201).json({ message: 'Order placed successfully', Status: 'Success' ,}); 
     });
   });
 });
 
+app.get('/infoorder/:id',(req, res)=>{
+  const id = req.params.id;
+  const sql = "SELECT * FROM donhang WHERE idtaikhoan=" + id + " ORDER BY thoigiandathang DESC";
+  db.query(sql,(err,result)=>{
+      if(err) return res.json({Message: "lấy thông tin đơn hàng lỗi"})
+      return res.json(result);
+  })
+})
+app.get('/infoorder',(req, res)=>{
+  const id = req.params.id;
+  const sql = "SELECT * FROM donhang ORDER BY thoigiandathang DESC";
+  db.query(sql,(err,result)=>{
+      if(err) return res.json({Message: "lấy thông tin đơn hàng lỗi"})
+      return res.json(result);
+  })
+})
+
+
+app.get('/fulorderproduct/:id',(req, res)=>{
+  const id = req.params.id;
+  const sql = "SELECT * FROM chitietdonhang LEFT JOIN sanpham ON sanpham.idsanpham = chitietdonhang.idsanpham WHERE chitietdonhang.iddonhang =" + id ;
+  db.query(sql,(err,result)=>{
+      if(err) return res.json({Message: "lấy thông tin đơn hàng lỗi"})
+      return res.json(result);
+  })
+})
+
+
+app.post('/api/cannceledorder/:id', (req, res) => {
+  const id = req.params.id;
+  const sql = 'UPDATE donhang SET trangthai = "Đã Hủy" WHERE iddonhang = ' + id;
+  db.query(sql,id, (err, result) => {
+    if (err) return res.json({Message: "Không thể hủy liên hệ hỗ trợ"})
+    return res.json({Status: "Success", message: "Huỷ đơn hàng thành công"});
+  });
+});
+
+app.get('/fullproduct', (req, res) => {
+  const sql = "SELECT * FROM sanpham";
+  db.query(sql, (err, result) => {
+    if (err) {
+      // Nếu có lỗi xảy ra, gửi phản hồi lỗi
+      return res.status(500).json({ Message: "Lấy thông tin lỗi" });
+    }
+
+    // Xử lý dữ liệu để tính toán giá hiện tại
+    const products = result.map((product) => {
+      const giasanpham = product.giasanpham;
+      const phantramgiamgia = product.phantramgiamgia;
+      const giahientai = giasanpham - (giasanpham * phantramgiamgia) / 100;
+
+      return {
+        ...product,
+        giahientai: giahientai,
+      };
+    });
+
+    // Gửi dữ liệu sản phẩm đã được xử lý
+    res.json(products);
+  });
+});
+
+app.post('/api/update', (req, res) => {
+  const iddonhang = req.body.iddonhang;
+  const trangthai = req.body.trangthai;
+
+  // Sử dụng câu lệnh chuẩn với các tham số để tránh SQL Injection
+  const sql = 'UPDATE donhang SET trangthai = ? WHERE iddonhang = ?';
+  
+  // Truyền các tham số vào mảng thứ hai
+  db.query(sql, [trangthai, iddonhang], (err, result) => {
+    if (err) {
+      // Xử lý lỗi khi thực hiện truy vấn
+      console.error(err);
+      return res.json({ err, Message: "Không thể cập nhật trạng thái đơn hàng" });
+    }
+    // Trả về kết quả thành công nếu không có lỗi
+    return res.json({ Status: "Success", message: "Cập nhật trạng thái đơn hàng thành công" });
+  });
+});
 
 app.listen(4000, () => {
   console.log("Server listening on port 4000!");

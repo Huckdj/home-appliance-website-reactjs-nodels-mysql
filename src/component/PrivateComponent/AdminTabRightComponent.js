@@ -8,7 +8,7 @@ import manufac2_icon from '../../assets/images/manu_icon2.png'
 import addproduct_icon from '../../assets/images/addproduct_icon.png'
 function AdminComponent() {
   return (
-    <div className="body_admintab flex min-h-screen bg-slate-800" >
+    <div className="body_admintab flex min-h-screen bg-black" >
       <div className="tab_all w-80">
         <img src={logo} />
         <hr />
@@ -65,7 +65,20 @@ function AdminComponent() {
           <img src={manufac2_icon} width='10%' className=''/>
           <p className=''>Loại Máy</p>
         </NavLink>
-        <hr />
+
+        {/* Tab 4 */}
+        <h2 className='text-white uppercase font-bold'>Đơn hàng</h2>
+        <NavLink
+          to="/admin/checkorder"
+          className={({ isActive }) =>
+            isActive
+              ? "bg-white/20 rounded-md m-1.5 text-white pb-2 active items-center justify-center flex"
+              : "text-white hover:bg-white/20 m-1.5 hover:rounded-md pb-2  text-center flex items-center justify-center"
+          }
+        >
+          <img src={manufac2_icon} width='10%' className=''/>
+          <p className=''>Kiểm Tra Đơn Hàng</p>
+        </NavLink>
       </div>
     </div>
   );

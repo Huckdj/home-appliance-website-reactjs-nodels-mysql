@@ -18,3 +18,9 @@ export const DELETE_PRODUCT = (productdelete) => {
       payload: productminus
     };
   };
+
+  export const CLEAR_CART = () => {
+    return {
+      type: "CLEAR_CART"
+    };
+  };

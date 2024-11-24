@@ -199,9 +199,9 @@ function Home() {
               ))}
             </div>
             <div className="justify-center flex mb-3">
-              <button className="bg-white pt-2 pb-2 pr-6 pl-6 rounded-md mb-2">
+              <a href='/allproduct' className="bg-white pt-2 pb-2 pr-6 pl-6 rounded-md mb-2">
                 Xem tất cả
-              </button>
+              </a>
             </div>
           </div>
         </div>

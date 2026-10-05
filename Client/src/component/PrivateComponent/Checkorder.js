@@ -44,7 +44,11 @@ function Checkorder() {
         `http://localhost:4000/infoorder`
       )
       .then((res) => setOrder(res.data));
+<<<<<<< HEAD:Client/src/component/PrivateComponent/Checkorder.js
   },[]);
+=======
+  });
+>>>>>>> 333550e1830657912ad1a9e6a7f002ff369801af:src/component/PrivateComponent/Checkorder.js
   console.log(order);
 
   const handlecheck = (id) => {
